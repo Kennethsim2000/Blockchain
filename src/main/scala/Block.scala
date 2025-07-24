@@ -35,6 +35,7 @@ object Block { // companion object for block with default methods
         (hash, proof, timeStamp)
     }
 
+    //create the genesis block, the first block
     def createGenesisBlock(): Block = {
         val initialTransaction = Transaction("Genesis", "miner", 50)
         val transactions = List(initialTransaction)
@@ -48,6 +49,7 @@ object Block { // companion object for block with default methods
         Block(currIndex, hash, prevBlock.hash, proof, timestamp, transactions)
     }
 
+    //when verifying the proof, we check not just the prevHash but also the transactions and index
     def isValidProof(block: Block): Boolean = {
         val prefix = "0" * difficulty
         val hashComputed = computeHash(block.index, block.prevHash, block.transactions, block.proof)
@@ -55,3 +57,6 @@ object Block { // companion object for block with default methods
     }
 
 }
+
+//The proof in a blockchain serves as a mechanism to secure the network and ensure that adding a block requires
+// significant computational effort.
