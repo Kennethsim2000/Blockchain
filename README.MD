@@ -4,8 +4,9 @@ This project implements a **simplified blockchain system** using Scala and Akka 
 
 - **Block**: Represents a single block in the chain.
 - **Blockchain**: Manages the chain of blocks and validates additions.
-- **Miner**: Gathers transactions and mines new blocks.
-- **Node**: Coordinates communication between Miner and Blockchain.
+- **Broker**: Manages the transactions and communicates with BlockChain to mine block
+- **Miner**: Handles proof and validation of block, mines new blocks.
+- **Node**: Exposes REST API to public.
 
 ### Components
 
