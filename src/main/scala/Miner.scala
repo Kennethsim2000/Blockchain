@@ -11,7 +11,7 @@ class Miner(blockChain:ActorRef) extends Actor {
 
     override def receive: Receive = {
         //TODO: complete method completion
-        case MinePendingTransactions => ???
+        case MinePendingTransactions => ??? // Miner actor communicates with BlockChain actor
         case AddTransaction(transaction) => ???
     }
 }
