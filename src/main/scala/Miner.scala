@@ -1,17 +1,21 @@
-import Miner.{AddTransaction, MinePendingTransactions}
+import Broker.MineCurrentBlockBrokerEvent
+import Miner.{MineCurrentBlockMinerEvent, Ready, ValidateBlock}
 import akka.actor.{Actor, ActorRef}
 
 object Miner {
-    case object MinePendingTransactions
-    case class AddTransaction(transaction: Transaction)
+    sealed trait MinerEvent
+    case class ValidateBlock(block: Block) extends MinerEvent
+    case object MineCurrentBlockMinerEvent extends MinerEvent
+    case object Ready extends MinerEvent
 }
 
-class Miner(blockChain:ActorRef) extends Actor {
-    var pendingTransactions = List()
+class Miner(brokerActor:ActorRef) extends Actor {
 
     override def receive: Receive = {
-        //TODO: complete method completion
-        case MinePendingTransactions => ??? // Miner actor communicates with BlockChain actor
-        case AddTransaction(transaction) => ???
+        case ValidateBlock(block) =>
+            val isValid = Block.isValidProof(block)
+            sender() ! isValid
+        case MineCurrentBlockMinerEvent => brokerActor ! MineCurrentBlockBrokerEvent
+        case Ready => ??? // TODO: To be implemented in case the miner is not ready
     }
 }
