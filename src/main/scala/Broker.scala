@@ -1,6 +1,6 @@
 import BlockChain.AddBlockEvent
 import Broker.{AddTransactionEvent, ClearTransactionEvent, GetTransactionEvent, MineCurrentBlockBrokerEvent}
-import akka.actor.{Actor, ActorRef}
+import akka.actor.{Actor, ActorRef, Props}
 
 // Broker is in charge of the current transactions
 object Broker {
@@ -9,6 +9,8 @@ object Broker {
     case object GetTransactionEvent extends BrokerEvent
     case object ClearTransactionEvent extends BrokerEvent
     case object MineCurrentBlockBrokerEvent extends BrokerEvent
+
+    def props(brokerActor: ActorRef) : Props = Props(new Broker(brokerActor))
 }
 
 class Broker(blockchainActor: ActorRef) extends Actor {
