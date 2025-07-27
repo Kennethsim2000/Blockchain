@@ -1,4 +1,4 @@
-import BlockChain.{AddBlockEvent, GetLastHashEvent, getLastIndexEvent}
+import BlockChain.{AddBlockEvent, GetLastHashEvent, getIndexEvent}
 import Broker.GetTransactionEvent
 import akka.actor.typed.scaladsl.Behaviors
 import akka.actor.typed.{ActorRef, Behavior}
@@ -51,7 +51,7 @@ object Miner {
                         Behaviors.same
                     case obtainLastIndexEvent(transactions, prevHash) =>
                         context.log.info(s"Mining block with ${transactions.size} transactions and prevHash ${prevHash}")
-                        context.ask(blockchainActor, ref => getLastIndexEvent(ref)) {
+                        context.ask(blockchainActor, ref => getIndexEvent(ref)) {
                         case Success(lastIndex) => mineBlock(transactions, prevHash, lastIndex)
                         case Failure(ex) => MiningFailed(ex.getMessage)
                     }
