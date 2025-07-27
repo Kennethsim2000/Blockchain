@@ -21,3 +21,41 @@ This project implements a **simplified blockchain system** using Scala and Akka 
 
 - **Node**  
   The gateway for external requests. Sends transactions to the miner and retrieves data from the blockchain.
+
+### 🕸️ Simulating a Distributed Network
+
+To simulate a multi-node blockchain network (distributed behavior), you can instantiate **N groups** of the following 4 actors:
+
+Each node consists of:
+
+- `NodeX` — REST API interface
+- `BrokerX` — Handles transactions
+- `MinerX` — Mines and validates blocks
+- `BlockchainX` — Maintains the chain
+
+#### Example: 2 Nodes
+
+```
+NodeA Group:
+  - NodeA
+  - BrokerA
+  - MinerA
+  - BlockchainA
+
+NodeB Group:
+  - NodeB
+  - BrokerB
+  - MinerB
+  - BlockchainB
+
+```
+
+Each **Node** can:
+
+- 🧩 Maintain its own **independent blockchain**
+- 🪙 **Mine** new blocks with its own transactions
+- 📥 **Receive** transactions via REST
+- 📡 **Broadcast** newly mined blocks to **other nodes**
+
+
+
