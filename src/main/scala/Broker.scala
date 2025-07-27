@@ -1,29 +1,35 @@
-import BlockChain.AddBlockEvent
-import Broker.{AddTransactionEvent, ClearTransactionEvent, GetTransactionEvent, MineCurrentBlockBrokerEvent}
-import akka.actor.{Actor, ActorRef, Props}
+import akka.actor.typed.{ActorRef, Behavior}
+import akka.actor.typed.scaladsl.Behaviors
 
-// Broker is in charge of the current transactions
 object Broker {
+
     sealed trait BrokerEvent
     case class AddTransactionEvent(transaction: Transaction) extends BrokerEvent
-    case object GetTransactionEvent extends BrokerEvent
+    case class GetTransactionEvent(replyTo: ActorRef[List[Transaction]]) extends BrokerEvent
     case object ClearTransactionEvent extends BrokerEvent
-    case object MineCurrentBlockBrokerEvent extends BrokerEvent
 
-    def props(brokerActor: ActorRef) : Props = Props(new Broker(brokerActor))
-}
+    // Broker contains all the transactions, and communicates with blockchain actor to add block
+    def apply(blockchainActor: ActorRef[BlockChain.AddBlockEvent]): Behavior[BrokerEvent] =
+        brokerBehavior(blockchainActor, List.empty)
 
-class Broker(blockchainActor: ActorRef) extends Actor {
+    private def brokerBehavior(
+                                  blockchainActor: ActorRef[BlockChain.AddBlockEvent],
+                                  pendingTransactions: List[Transaction]
+                              ): Behavior[BrokerEvent] = {
 
-    var pendingTransactions:List[Transaction] = List()
+        Behaviors.receive { (context, message) =>
+            message match {
+                case AddTransactionEvent(transaction) =>
+                    brokerBehavior(blockchainActor, pendingTransactions :+ transaction)
 
-    override def receive: Receive = {
-        case AddTransactionEvent(transaction) => pendingTransactions :+ transaction
-        case GetTransactionEvent => sender() ! pendingTransactions
-        case ClearTransactionEvent =>
-            pendingTransactions = List()
-        case MineCurrentBlockBrokerEvent =>
-            blockchainActor ! AddBlockEvent(pendingTransactions)
-            pendingTransactions = List()
+                case GetTransactionEvent(replyTo) =>
+                    replyTo ! pendingTransactions
+                    Behaviors.same
+
+                case ClearTransactionEvent =>
+                    brokerBehavior(blockchainActor, List.empty)
+
+            }
+        }
     }
 }
