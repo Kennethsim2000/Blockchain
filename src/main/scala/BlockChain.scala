@@ -3,9 +3,6 @@ import akka.actor.typed.{ActorRef, Behavior}
 
 //This is the actor that contains all the blocks
 object BlockChain {
-    sealed trait Chain
-    case class ValidChain(blocks: Seq[Block]) extends Chain
-    case class EmptyChain() extends Chain
 
     sealed trait BlockChainEvent
     case class GetChainEvent(replyTo: ActorRef[List[Block]]) extends BlockChainEvent
