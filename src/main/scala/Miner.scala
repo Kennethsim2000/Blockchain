@@ -1,5 +1,5 @@
 import BlockChain.{AddBlockEvent, GetLastHashEvent, getIndexEvent}
-import Broker.GetTransactionEvent
+import Broker.{ClearTransactionEvent, GetTransactionEvent}
 import akka.actor.typed.scaladsl.Behaviors
 import akka.actor.typed.{ActorRef, Behavior}
 import akka.util.Timeout
@@ -67,6 +67,7 @@ object Miner {
                         val (hash, proof, timestamp) = Block.mineBlock(index, prevHash, transactions)
                         val newBlock = Block(index, hash, prevHash, proof, timestamp, transactions)
                         blockchainActor ! AddBlockEvent(newBlock)
+                        brokerActor ! ClearTransactionEvent
                         Behaviors.same
                     case MiningFailed(error) =>
                         context.log.error(error)

@@ -1,4 +1,4 @@
-import BlockChain.{AddBlockEvent, GetLastHashEvent, getIndexEvent}
+import BlockChain.{AddBlockEvent, GetChainEvent, GetLastHashEvent, getIndexEvent}
 import Broker.{AddTransactionEvent, GetTransactionEvent}
 import Miner.{MineCurrentBlockMinerEvent, MinerEvent, MiningFailed, ValidateBlock, mineBlock, obtainLastHashEvent, obtainLastIndexEvent}
 import akka.actor.typed.scaladsl.Behaviors
@@ -16,6 +16,9 @@ object Node {
     case class ReceiveNewBlockEvent(block:Block) extends NodeEvent
     case class AppendBlockEvent(block:Block) extends NodeEvent
     case object MineEvent extends NodeEvent
+
+    case class GetChainRequestEvent(replyTo: ActorRef[List[Block]]) extends NodeEvent
+    case class GetChainResponseEvent(chain: List[Block], replyTo:ActorRef[List[Block]]) extends NodeEvent
 
     case class NodeError(ex:String) extends NodeEvent
 
@@ -62,6 +65,15 @@ object Node {
                         Behaviors.same
                     case MineEvent =>
                         minerActor ! MineCurrentBlockMinerEvent
+                        Behaviors.same
+                    case GetChainRequestEvent(replyTo) =>
+                        context.ask(blockchainActor, ref => GetChainEvent(ref)) {
+                            case Success(blocks) => GetChainResponseEvent(blocks, replyTo)
+                            case Failure(ex) => NodeError(ex.getMessage)
+                        }
+                        Behaviors.same
+                    case GetChainResponseEvent(blocks, replyTo) =>
+                        replyTo ! blocks
                         Behaviors.same
                     case NodeError(error) =>
                         context.log.error(error)
