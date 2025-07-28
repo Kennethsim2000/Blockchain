@@ -11,8 +11,8 @@ import scala.util.{Failure, Success}
 object Miner {
     sealed trait MinerEvent
     case class ValidateBlock(block: Block, replyTo: ActorRef[Boolean]) extends MinerEvent
-    case object MineCurrentBlockMinerEvent extends MinerEvent
 
+    case object MineCurrentBlockMinerEvent extends MinerEvent
     sealed trait MiningWorkflowEvent extends MinerEvent
     case class obtainLastHashEvent(transactions: List[Transaction]) extends MiningWorkflowEvent
     case class obtainLastIndexEvent(transactions: List[Transaction], prevHash: String) extends MiningWorkflowEvent
@@ -20,6 +20,9 @@ object Miner {
 
     case class MiningFailed(error: String) extends MinerEvent
 
+    def createCoinBaseTransaction(): Transaction = {
+        Transaction("Network", "Miner", 50)
+    }
     def apply(brokerActor: ActorRef[Broker.BrokerEvent], blockchainActor: ActorRef[BlockChain.BlockChainEvent]): Behavior[MinerEvent] =
         minerBehavior(brokerActor, blockchainActor)
 
@@ -38,7 +41,9 @@ object Miner {
                     case MineCurrentBlockMinerEvent =>
                         context.log.info("Received mine block event")
                         context.ask(brokerActor, ref => GetTransactionEvent(ref)) {
-                            case Success(transactions) => obtainLastHashEvent(transactions)
+                            case Success(transactions) =>
+                                val coinbaseTransaction = createCoinBaseTransaction()
+                                obtainLastHashEvent(transactions :+ coinbaseTransaction) // add coinbase transaction for the miner
                             case Failure(ex) => MiningFailed(ex.getMessage)
                         }
                         Behaviors.same

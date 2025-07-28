@@ -28,7 +28,6 @@ object Broker {
 
                 case ClearTransactionEvent =>
                     brokerBehavior(blockchainActor, List.empty)
-
             }
         }
     }
