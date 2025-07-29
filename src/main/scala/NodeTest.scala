@@ -20,13 +20,12 @@ object NodeTest extends App {
         case Success(transactions) =>
             println("Transactions in the broker")
             transactions.foreach(x=> println(x))
-            system.terminate()
         case Failure(ex) =>
             println(s"Failed to get transactions, ${ex.getMessage}")
             system.terminate()
     }
     val futureChain = system.ask(replyTo => GetChainRequestEvent(replyTo))
-    futureChain.onComplete {
+    futureChain.onComplete { // expect two blocks to be printed
         case Success(chain) =>
             println("Blocks in the blockchain")
             chain.foreach(x=> println(x))
