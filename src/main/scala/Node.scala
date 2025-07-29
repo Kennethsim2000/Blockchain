@@ -32,7 +32,7 @@ object Node {
         Behaviors.setup { context =>
             implicit val timeout:Timeout = 3.seconds
             val blockchainActor = context.spawn(BlockChain(), "blockchain")
-            val brokerActor = context.spawn(Broker(blockchainActor), "broker")
+            val brokerActor = context.spawn(Broker(), "broker")
             val minerActor = context.spawn(Miner(brokerActor, blockchainActor), "miner")
 
             Behaviors.receive { (context, message) =>

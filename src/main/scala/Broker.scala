@@ -9,25 +9,24 @@ object Broker {
     case object ClearTransactionEvent extends BrokerEvent
 
     // Broker contains all the transactions, and communicates with blockchain actor to add block
-    def apply(blockchainActor: ActorRef[BlockChain.AddBlockEvent]): Behavior[BrokerEvent] =
-        brokerBehavior(blockchainActor, List.empty)
+    def apply(): Behavior[BrokerEvent] =
+        brokerBehavior(List.empty)
 
     private def brokerBehavior(
-                                  blockchainActor: ActorRef[BlockChain.AddBlockEvent],
                                   pendingTransactions: List[Transaction]
                               ): Behavior[BrokerEvent] = {
 
         Behaviors.receive { (context, message) =>
             message match {
                 case AddTransactionEvent(transaction) =>
-                    brokerBehavior(blockchainActor, pendingTransactions :+ transaction)
+                    brokerBehavior(pendingTransactions :+ transaction)
 
                 case GetTransactionEvent(replyTo) =>
                     replyTo ! pendingTransactions
                     Behaviors.same
 
                 case ClearTransactionEvent =>
-                    brokerBehavior(blockchainActor, List.empty)
+                    brokerBehavior(List.empty)
             }
         }
     }
