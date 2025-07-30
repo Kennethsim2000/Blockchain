@@ -1,11 +1,12 @@
 package durable
 
-import BlockChainDurable.{AddBlockEvent, GetChainEvent}
+import BlockChainDurable.{AddBlockEvent, AddNeighbourBlockEvent, GetChainEvent}
 import BrokerDurable.{AddTransactionEvent, GetTransactionEvent}
 import MinerDurable.{MineCurrentBlockMinerEvent, ValidateBlock}
 import akka.actor.typed.scaladsl.Behaviors
 import akka.actor.typed.{ActorRef, Behavior}
 import akka.util.Timeout
+import durable.Network.NetworkEvent
 
 import scala.concurrent.duration.DurationInt
 import scala.util.{Failure, Success}
@@ -21,21 +22,23 @@ object NodeDurable {
 
     case class GetChainRequestEvent(replyTo: ActorRef[List[Block]]) extends NodeEvent
     case class GetChainResponseEvent(chain: List[Block], replyTo:ActorRef[List[Block]]) extends NodeEvent
+
     case class BlockchainReady() extends NodeEvent
 
     case class NodeError(ex:String) extends NodeEvent
 
 
-    def apply(nodeId: Int): Behavior[NodeEvent] =
-        nodeBehavior(nodeId)
+    def apply(nodeId: String, network: ActorRef[NetworkEvent]): Behavior[NodeEvent] =
+        nodeBehavior(nodeId, network)
 
     private def nodeBehavior(
-                                nodeId:Int
+                                nodeId:String,
+                                network: ActorRef[NetworkEvent]
                             ): Behavior[NodeEvent] = {
         Behaviors.setup { context =>
             implicit val timeout:Timeout = 3.seconds
-            val blockchainActor = context.spawn(BlockChainDurable(), "BlockChainDurable")
-            val brokerActor = context.spawn(BrokerDurable(blockchainActor), "brokerDurable")
+            val blockchainActor = context.spawn(BlockChainDurable(nodeId, network), "BlockChainDurable")
+            val brokerActor = context.spawn(BrokerDurable(), "brokerDurable")
             val minerActor = context.spawn(MinerDurable(brokerActor, blockchainActor), "minerDurable")
 
             Behaviors.receive { (context, message) =>
@@ -53,6 +56,7 @@ object NodeDurable {
                         replyTo ! transactions
                         Behaviors.same
                     case ReceiveNewBlockEvent(block) =>
+                        context.log.info(s"$nodeId have received a new block from neighbours")
                         context.ask(minerActor, ref => ValidateBlock(block, ref)) {
                             case Success(isValid) =>
                                 if(isValid) {
@@ -64,7 +68,7 @@ object NodeDurable {
                         }
                         Behaviors.same
                     case AppendBlockEvent(block) =>
-                        blockchainActor ! AddBlockEvent(block)
+                        blockchainActor ! AddNeighbourBlockEvent(block)
                         Behaviors.same
                     case MineEvent =>
                         minerActor ! MineCurrentBlockMinerEvent

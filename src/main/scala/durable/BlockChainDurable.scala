@@ -2,9 +2,10 @@ package durable
 
 
 import akka.actor.typed.scaladsl.{ActorContext, Behaviors}
-import akka.actor.typed.{ActorRef, Behavior, PostStop}
+import akka.actor.typed.{ActorRef, Behavior}
 import akka.persistence.typed.PersistenceId
 import akka.persistence.typed.state.scaladsl.{DurableStateBehavior, Effect}
+import durable.Network.{NetworkEvent, broadcastBlockEvent}
 
 
 //This is the actor that contains all the blocks
@@ -14,20 +15,21 @@ object BlockChainDurable {
 
     case class GetChainEvent(replyTo: ActorRef[List[Block]]) extends BlockChainEvent
     case class AddBlockEvent(block: Block) extends BlockChainEvent
+    case class AddNeighbourBlockEvent(block: Block) extends BlockChainEvent
     case class GetLastHashEvent(replyTo: ActorRef[String]) extends BlockChainEvent
     case class getIndexEvent(replyTo: ActorRef[Int]) extends BlockChainEvent
 
     case class BlockChainState(blocks: List[Block]) extends Serializable
 
-    def apply(): Behavior[BlockChainEvent] = {
+    def apply(nodeId: String,  network: ActorRef[NetworkEvent]): Behavior[BlockChainEvent] = {
         val genesisBlock = BlockDurable.createGenesisBlock()
-        blockchainDurableBehavior(List(genesisBlock))
+        blockchainDurableBehavior(List(genesisBlock), nodeId, network)
     }
 
-    private def blockchainDurableBehavior(blocks: List[Block]): Behavior[BlockChainEvent] = {
+    private def blockchainDurableBehavior(blocks: List[Block], nodeId: String,  network: ActorRef[NetworkEvent]): Behavior[BlockChainEvent] = {
         Behaviors.setup { context:ActorContext[BlockChainEvent] =>
             DurableStateBehavior[BlockChainEvent, BlockChainState](
-                    persistenceId = PersistenceId.ofUniqueId("blockchain"),
+                    persistenceId = PersistenceId.ofUniqueId(nodeId),
                     emptyState = BlockChainState(blocks),
                     commandHandler = (state, command) => {
                         command match {
@@ -37,6 +39,17 @@ object BlockChainDurable {
                                 val valid = BlockDurable.isValidProof(block)
                                 if(valid) {
                                     context.log.info("Block is valid, added")
+                                    network ! broadcastBlockEvent(block, nodeId)
+                                    Effect.persist(state.copy(blocks = state.blocks :+ block))
+                                }
+                                else {
+                                    context.log.info("Block is invalid, rejected")
+                                    Effect.none
+                                }
+                            case AddNeighbourBlockEvent(block) =>
+                                val valid = BlockDurable.isValidProof(block)
+                                if(valid) {
+                                    context.log.info("Neighbour block is valid, added")
                                     Effect.persist(state.copy(blocks = state.blocks :+ block))
                                 }
                                 else {
@@ -47,7 +60,6 @@ object BlockChainDurable {
                                 val lastBlock = state.blocks.last
                                 Effect.reply(replyTo)(lastBlock.index + 1)
                             case GetLastHashEvent(replyTo) =>
-                                println("inside blockchain getLastHash")
                                 val lastBlock = state.blocks.last
                                 Effect.reply(replyTo)(lastBlock.hash)
                         }

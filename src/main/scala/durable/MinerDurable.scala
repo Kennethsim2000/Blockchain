@@ -50,22 +50,18 @@ object MinerDurable {
                         }
                         Behaviors.same
                     case obtainLastHashEvent(transactions) =>
-                        context.log.info(s"Mining block with ${transactions.size} transactions")
                         context.ask(blockchainActor, ref => GetLastHashEvent(ref)) {
                             case Success(prevHash) => obtainLastIndexEvent(transactions, prevHash)
                             case Failure(ex) => MiningFailed(ex.getMessage)
                         }
                         Behaviors.same
                     case obtainLastIndexEvent(transactions, prevHash) =>
-                        println("prev hash obtained successfully")
-                        context.log.info(s"Mining block with ${transactions.size} transactions and prevHash ${prevHash}")
                         context.ask(blockchainActor, ref => getIndexEvent(ref)) {
                             case Success(lastIndex) => mineBlock(transactions, prevHash, lastIndex)
                             case Failure(ex) => MiningFailed(ex.getMessage)
                         }
                         Behaviors.same
                     case mineBlock(transactions, prevHash, index) =>
-                        println("miner will mine block now")
                         context.log.info(s"Mining block with ${transactions.size} transactions and prevHash ${prevHash}" +
                             s"with index ${index}")
                         val (hash, proof, timestamp) = BlockDurable.mineBlock(index, prevHash, transactions)
