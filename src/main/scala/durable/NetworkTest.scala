@@ -9,7 +9,7 @@ import durable.Network.SendToNode
 import scala.concurrent.duration.DurationInt
 import scala.util.{Failure, Success}
 
-object NodeDurableTest extends App {
+object NetworkTest extends App {
     val system : ActorSystem[Network.NetworkEvent] = ActorSystem(Network(), "network")
     system ! SendToNode("node1",AddNewTransactionEvent(Transaction("Alice", "Bob", 50)))
     system ! SendToNode("node1", AddNewTransactionEvent(Transaction("Bob", "Charlie", 50)))
