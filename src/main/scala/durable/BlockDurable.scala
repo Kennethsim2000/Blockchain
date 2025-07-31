@@ -2,11 +2,18 @@ package durable
 
 import java.security.MessageDigest
 import scala.annotation.tailrec
+import spray.json._
+import DefaultJsonProtocol._
 
 case class Transaction(sender: String, receiver: String, amount: Int)
 
 case class Block(index: Int, hash:String, prevHash: String, proof:Long, timestamp: Long, transactions: List[Transaction])
 //hash for a block is used to check if the block has been tampered with
+
+object JsonFormats {
+    implicit val transactionFormat: RootJsonFormat[Transaction] = jsonFormat3(Transaction)
+    implicit val blockFormat: RootJsonFormat[Block] = jsonFormat6(Block)
+}
 
 object BlockDurable { // companion object for block with default methods
 
