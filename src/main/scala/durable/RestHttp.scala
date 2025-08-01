@@ -13,10 +13,10 @@ import durable.Network.SendToNode
 import akka.http.scaladsl.server.Route
 import akka.util.Timeout
 import durable.NetworkTest.{futureChain2, system}
-import durable.NodeDurable.{AddNewTransactionEvent, GetChainRequestEvent}
+import durable.NodeDurable.{AddNewTransactionEvent, GetChainRequestEvent, MineEvent}
 import durable.Block
 import durable.Transaction
-import durable.JsonFormats._  // pulls in the formatters
+import durable.JsonFormats._
 
 import scala.concurrent.Future
 import scala.concurrent.duration.DurationInt
@@ -39,12 +39,21 @@ object RestHttp {
         // no implicits found for unmarshilling from request
         val route: Route =
             concat(
-                post {
+                post { //http://localhost:8080/transaction
                     path("transaction") {
                         entity(as[AddTransaction]) { transaction =>
                             system ! SendToNode(transaction.nodeId,
                                 AddNewTransactionEvent(Transaction(transaction.sender, transaction.receiver, transaction.amount)))
                                 complete("transaction created")
+                        }
+                    }
+                },
+                get { //http://localhost:8080/mine
+                    path("mine" ) {
+                        parameter("nodeId") { nodeId =>
+                            system ! SendToNode(nodeId,
+                                MineEvent)
+                            complete("Block is mined")
                         }
                     }
                 },
