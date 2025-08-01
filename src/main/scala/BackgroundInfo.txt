@@ -1,6 +1,7 @@
 Mining the Block:
-When a node mines a block, it performs the mining process (finding the correct proof of work, for example) and creates a new block with the transactions that are pending in that node.
-The node then broadcasts the new block to other nodes in the network.
+When a node mines a block, it performs the mining process (finding the correct proof of work, for example) and creates
+a new block with the transactions that are pending in that node. The node then broadcasts the new block to other
+nodes in the network.
 
 Displaying the Block to Other Nodes:
 When a node successfully mines a block, it will broadcast the block to all other nodes in the network. This is typically
@@ -9,6 +10,5 @@ eventually spreading the block throughout the network.
 
 Other nodes that receive the new block will:
 Verify the block (check the proof, check that transactions are valid, ensure the block follows the chain rules, etc.).
-Add the block to their local copy of the blockchain.
-If the block is valid, they will also update their pending transaction pool by removing the transactions that are
-included in the block.
+Add the block to their local copy of the blockchain. If the block is valid, they will also update their pending
+transaction pool by removing the transactions that are included in the block.
