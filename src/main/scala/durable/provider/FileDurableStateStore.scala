@@ -21,7 +21,8 @@ class FileDurableStateStore[T](system: ExtendedActorSystem, config: Config, cfgP
     override def upsertObject(persistenceId: String, revision: Long, value: T, tag: String): Future[Done] = Future {
         val file = stateFile(persistenceId)
         file.getParentFile.mkdirs()
-        val oos = new ObjectOutputStream(new FileOutputStream(file))
+        //Ensures that all the directories leading up to the file path exist — creates them if not.
+        val oos = new ObjectOutputStream(new FileOutputStream(file)) //Creates an output stream to write binary data to the file.
         try {
             oos.writeLong(revision)
             oos.writeUTF(tag)
@@ -31,6 +32,10 @@ class FileDurableStateStore[T](system: ExtendedActorSystem, config: Config, cfgP
         }
         Done
     }
+    //This writes 3 things to the file in order:
+    //A 64-bit long (the revision)
+    //A UTF-8 string (the tag)
+    //A full serialized object (value)
 
     override def deleteObject(persistenceId: String): Future[Done] = Future {
         val file = stateFile(persistenceId)
@@ -45,7 +50,7 @@ class FileDurableStateStore[T](system: ExtendedActorSystem, config: Config, cfgP
         if(file.exists()) {
             val ois = new ObjectInputStream(new FileInputStream(file))
             val storedRevision = try {
-                ois.readLong()
+                ois.readLong() // reads the first 8 bytes
             } finally {
                 ois.close()
             }
