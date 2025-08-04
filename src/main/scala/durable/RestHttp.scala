@@ -12,10 +12,7 @@ import akka.http.scaladsl.model.StatusCodes
 import durable.Network.SendToNode
 import akka.http.scaladsl.server.Route
 import akka.util.Timeout
-import durable.NetworkTest.{futureChain2, system}
 import durable.NodeDurable.{AddNewTransactionEvent, GetChainRequestEvent, MineEvent}
-import durable.Block
-import durable.Transaction
 import durable.JsonFormats._
 
 import scala.concurrent.Future
